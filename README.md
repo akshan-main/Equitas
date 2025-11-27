@@ -1,4 +1,4 @@
-# Equitas
+# Equitas - Robust Statistics Project
 
 ## Multiplicative Weights Aggregation for Robust LLM Governance
 
