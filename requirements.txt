@@ -1,0 +1,6 @@
+numpy>=1.24
+pandas>=2.0
+matplotlib>=3.8
+python-dotenv>=1.0
+autogen-agentchat>=0.4.0
+autogen-ext[openai]>=0.4.0
