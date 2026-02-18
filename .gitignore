@@ -1,1 +1,22 @@
 .env
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+
+# IDE / local
+.claude/
+
+# Large data (hosted on HuggingFace)
+**/recordings/
+**/batch_staging/
+*.backup_pre_patch
+
+# Old prototype outputs
+results/
+results_plato_v1/
+results_plato_v2/
+outputs/run1/
+task_data/
+task_mode/

@@ -1,0 +1,44 @@
+name: governance_recovery_fh
+environment: governance
+seed: 42
+num_runs: 3
+experiment_type: recovery_fh
+
+llm:
+  model: gpt-4o-mini
+  api_key_env: OPENAI_API_KEY
+  temperature: 0.7
+  max_tokens: 512
+
+world:
+  num_rounds: 40
+
+committee:
+  members_per_class: 7
+  num_judges: 5
+
+corruption:
+  corruption_rate: 0.5
+  adversary_type: scheduled
+  corruption_realization: algorithmic
+  corruption_target: members
+  scheduled_honest_rounds: 0
+
+aggregators:
+  - method: majority_vote
+  - method: oracle_upper_bound
+  - method: self_consistency
+    num_samples: 5
+  - method: ema_trust
+    ema_alpha: 0.3
+  - method: trimmed_vote
+    trim_fraction: 0.2
+  - method: multiplicative_weights
+    eta: 1.0
+    alpha: 1.0
+    beta: 0.5
+  - method: confidence_weighted
+  - method: random_dictator
+  - method: supervisor_rerank
+
+output_dir: outputs/run2/governance_recovery_fh

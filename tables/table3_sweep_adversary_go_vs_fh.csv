@@ -1,0 +1,5 @@
+Adversary,GO Utility,FH Utility,Δ Utility,GO Fairness,FH Fairness,Δ Fairness,GO Worst-Grp,FH Worst-Grp
+coordinated,0.4364,0.4385,+0.0020,0.9287,0.9293,+0.0006,0.2928,0.2949
+deceptive,0.4354,0.4381,+0.0027,0.9287,0.9291,+0.0004,0.2918,0.2947
+scheduled,0.4419,0.4437,+0.0018,0.9284,0.9293,+0.0009,0.2980,0.3004
+selfish,0.4515,0.4504,-0.0010,0.9292,0.9302,+0.0010,0.3048,0.3056

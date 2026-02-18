@@ -1,0 +1,786 @@
+{
+  "equitas_version": "0.1.0",
+  "metric": "trimmed_mean_utility",
+  "collapse_threshold": 0.5,
+  "ci_alpha": 0.1,
+  "ci_level": 0.9,
+  "z_value": 1.645211440143815,
+  "config": {
+    "config_path": "outputs/run2/governance_sweep_batch/config_used.yaml",
+    "seed": 42,
+    "num_runs": 5,
+    "rounds": null
+  },
+  "corruption_rates": [
+    0.0,
+    0.25,
+    0.5,
+    0.75
+  ],
+  "adversary_types": [
+    "coordinated",
+    "deceptive",
+    "scheduled",
+    "selfish"
+  ],
+  "aggregators": [
+    "confidence_weighted",
+    "ema_trust",
+    "majority_vote",
+    "multiplicative_weights",
+    "oracle",
+    "random_dictator",
+    "self_consistency",
+    "supervisor_rerank",
+    "trimmed_vote"
+  ],
+  "auc_scores": [
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "confidence_weighted",
+      "auc_utility": 0.32970009285735213,
+      "auc_fairness": 0.7002678041304312,
+      "auc_worst_group": 0.22285025573159228
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "ema_trust",
+      "auc_utility": 0.32970009285735213,
+      "auc_fairness": 0.7002678041304312,
+      "auc_worst_group": 0.22285025573159228
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "majority_vote",
+      "auc_utility": 0.3295065308832707,
+      "auc_fairness": 0.7003290102359279,
+      "auc_worst_group": 0.22284631327753707
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "multiplicative_weights",
+      "auc_utility": 0.32970009285735213,
+      "auc_fairness": 0.7002678041304312,
+      "auc_worst_group": 0.22285025573159228
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "oracle",
+      "auc_utility": 0.3504956861989951,
+      "auc_fairness": 0.6918607241924938,
+      "auc_worst_group": 0.22452558078513482
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "random_dictator",
+      "auc_utility": 0.3293531949126535,
+      "auc_fairness": 0.6997323688961583,
+      "auc_worst_group": 0.22207872161114156
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "self_consistency",
+      "auc_utility": 0.3295065308832707,
+      "auc_fairness": 0.7003290102359279,
+      "auc_worst_group": 0.22284631327753707
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "supervisor_rerank",
+      "auc_utility": 0.3292381729207483,
+      "auc_fairness": 0.7001769953676056,
+      "auc_worst_group": 0.22216999834423673
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "trimmed_vote",
+      "auc_utility": 0.3295754486885227,
+      "auc_fairness": 0.7002539201362268,
+      "auc_worst_group": 0.22284210129015233
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "confidence_weighted",
+      "auc_utility": 0.32608363526413825,
+      "auc_fairness": 0.6999126579116707,
+      "auc_worst_group": 0.22141857924187577
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "ema_trust",
+      "auc_utility": 0.32608363526413825,
+      "auc_fairness": 0.6999126579116707,
+      "auc_worst_group": 0.22141857924187577
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "majority_vote",
+      "auc_utility": 0.32621853942941803,
+      "auc_fairness": 0.6999585216172408,
+      "auc_worst_group": 0.22158154994273455
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "multiplicative_weights",
+      "auc_utility": 0.32608363526413825,
+      "auc_fairness": 0.6999126579116707,
+      "auc_worst_group": 0.22141857924187577
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "oracle",
+      "auc_utility": 0.3490673872686759,
+      "auc_fairness": 0.6912029035329517,
+      "auc_worst_group": 0.22217360765115762
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "random_dictator",
+      "auc_utility": 0.3261460326709449,
+      "auc_fairness": 0.6996841747816075,
+      "auc_worst_group": 0.220979958434716
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "self_consistency",
+      "auc_utility": 0.32621853942941803,
+      "auc_fairness": 0.6999585216172408,
+      "auc_worst_group": 0.22158154994273455
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "supervisor_rerank",
+      "auc_utility": 0.3261143776877604,
+      "auc_fairness": 0.6998732349920747,
+      "auc_worst_group": 0.22164727429045727
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "trimmed_vote",
+      "auc_utility": 0.3261492462750853,
+      "auc_fairness": 0.6998700394635515,
+      "auc_worst_group": 0.22139040347234892
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "confidence_weighted",
+      "auc_utility": 0.33169562723993307,
+      "auc_fairness": 0.7004578738950732,
+      "auc_worst_group": 0.22759262534947536
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "ema_trust",
+      "auc_utility": 0.33159813218878686,
+      "auc_fairness": 0.7004633903437827,
+      "auc_worst_group": 0.22753807586217262
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "majority_vote",
+      "auc_utility": 0.3314562140682779,
+      "auc_fairness": 0.7005062911847577,
+      "auc_worst_group": 0.2275109226401579
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "multiplicative_weights",
+      "auc_utility": 0.33169562723993307,
+      "auc_fairness": 0.7004578738950732,
+      "auc_worst_group": 0.22759262534947536
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "oracle",
+      "auc_utility": 0.3510412569029168,
+      "auc_fairness": 0.6914857704528997,
+      "auc_worst_group": 0.22536857596447854
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "random_dictator",
+      "auc_utility": 0.33192489556136434,
+      "auc_fairness": 0.7003425891864808,
+      "auc_worst_group": 0.22743185931497484
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "self_consistency",
+      "auc_utility": 0.3314562140682779,
+      "auc_fairness": 0.7005062911847577,
+      "auc_worst_group": 0.2275109226401579
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "supervisor_rerank",
+      "auc_utility": 0.3315388773806818,
+      "auc_fairness": 0.700618354408052,
+      "auc_worst_group": 0.22767133985779797
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "trimmed_vote",
+      "auc_utility": 0.331663809483696,
+      "auc_fairness": 0.7006632447093123,
+      "auc_worst_group": 0.2278619231236304
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "confidence_weighted",
+      "auc_utility": 0.3369235167140868,
+      "auc_fairness": 0.7001967447578892,
+      "auc_worst_group": 0.2287607702840664
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "ema_trust",
+      "auc_utility": 0.3369235167140868,
+      "auc_fairness": 0.7001967447578892,
+      "auc_worst_group": 0.2287607702840664
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "majority_vote",
+      "auc_utility": 0.33700396266227206,
+      "auc_fairness": 0.6999680904000192,
+      "auc_worst_group": 0.22859107485655555
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "multiplicative_weights",
+      "auc_utility": 0.3369235167140868,
+      "auc_fairness": 0.7001967447578892,
+      "auc_worst_group": 0.2287607702840664
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "oracle",
+      "auc_utility": 0.3464552638358872,
+      "auc_fairness": 0.6918335072271113,
+      "auc_worst_group": 0.22238433867230162
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "random_dictator",
+      "auc_utility": 0.33692759049015303,
+      "auc_fairness": 0.6995232833597445,
+      "auc_worst_group": 0.227953699970966
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "self_consistency",
+      "auc_utility": 0.33700396266227206,
+      "auc_fairness": 0.6999680904000192,
+      "auc_worst_group": 0.22859107485655555
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "supervisor_rerank",
+      "auc_utility": 0.33667628573730074,
+      "auc_fairness": 0.699936790436229,
+      "auc_worst_group": 0.2280022441933278
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "trimmed_vote",
+      "auc_utility": 0.3369460256206631,
+      "auc_fairness": 0.700143462030447,
+      "auc_worst_group": 0.2289140762540782
+    }
+  ],
+  "fairness_guardrails": [
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "confidence_weighted",
+      "min_worst_group_utility": 0.2402994491566687,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "ema_trust",
+      "min_worst_group_utility": 0.2402994491566687,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "majority_vote",
+      "min_worst_group_utility": 0.2402994491566687,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "multiplicative_weights",
+      "min_worst_group_utility": 0.2402994491566687,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "oracle",
+      "min_worst_group_utility": 0.2930781806212715,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "random_dictator",
+      "min_worst_group_utility": 0.2401667850074974,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "self_consistency",
+      "min_worst_group_utility": 0.2402994491566687,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "supervisor_rerank",
+      "min_worst_group_utility": 0.2396676715979156,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "trimmed_vote",
+      "min_worst_group_utility": 0.2406646069724465,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "confidence_weighted",
+      "min_worst_group_utility": 0.249094745874392,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "ema_trust",
+      "min_worst_group_utility": 0.249094745874392,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "majority_vote",
+      "min_worst_group_utility": 0.2504091494306529,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "multiplicative_weights",
+      "min_worst_group_utility": 0.249094745874392,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "oracle",
+      "min_worst_group_utility": 0.2896231172978808,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "random_dictator",
+      "min_worst_group_utility": 0.2474337933957786,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "self_consistency",
+      "min_worst_group_utility": 0.2504091494306529,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "supervisor_rerank",
+      "min_worst_group_utility": 0.2527293336700547,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "trimmed_vote",
+      "min_worst_group_utility": 0.2492199623849482,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "confidence_weighted",
+      "min_worst_group_utility": 0.2546245139550863,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "ema_trust",
+      "min_worst_group_utility": 0.2541881180566643,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "majority_vote",
+      "min_worst_group_utility": 0.2546245139550863,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "multiplicative_weights",
+      "min_worst_group_utility": 0.2546245139550863,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "oracle",
+      "min_worst_group_utility": 0.292627327202229,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "random_dictator",
+      "min_worst_group_utility": 0.2559903408826853,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "self_consistency",
+      "min_worst_group_utility": 0.2546245139550863,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "supervisor_rerank",
+      "min_worst_group_utility": 0.2580454881724577,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "trimmed_vote",
+      "min_worst_group_utility": 0.2570434297881676,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "confidence_weighted",
+      "min_worst_group_utility": 0.298059280412267,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "ema_trust",
+      "min_worst_group_utility": 0.298059280412267,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "majority_vote",
+      "min_worst_group_utility": 0.298059280412267,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "multiplicative_weights",
+      "min_worst_group_utility": 0.298059280412267,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "oracle",
+      "min_worst_group_utility": 0.2890208962054543,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "random_dictator",
+      "min_worst_group_utility": 0.2981125357966041,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "self_consistency",
+      "min_worst_group_utility": 0.298059280412267,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "supervisor_rerank",
+      "min_worst_group_utility": 0.297914291889583,
+      "passes_guardrail": true
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "trimmed_vote",
+      "min_worst_group_utility": 0.2983364092417017,
+      "passes_guardrail": true
+    }
+  ],
+  "regime_transitions": [],
+  "collapse_points": [
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "confidence_weighted",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "ema_trust",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "majority_vote",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "multiplicative_weights",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "oracle",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "random_dictator",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "self_consistency",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "supervisor_rerank",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "coordinated",
+      "aggregator": "trimmed_vote",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "confidence_weighted",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "ema_trust",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "majority_vote",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "multiplicative_weights",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "oracle",
+      "collapse_rate": NaN,
+      "rel_perf": NaN,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "random_dictator",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "self_consistency",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "supervisor_rerank",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "deceptive",
+      "aggregator": "trimmed_vote",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "confidence_weighted",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "ema_trust",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "majority_vote",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "multiplicative_weights",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "oracle",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "random_dictator",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "self_consistency",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "supervisor_rerank",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "scheduled",
+      "aggregator": "trimmed_vote",
+      "collapse_rate": 0.75,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "confidence_weighted",
+      "collapse_rate": 0.25,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "ema_trust",
+      "collapse_rate": 0.25,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "majority_vote",
+      "collapse_rate": 0.25,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "multiplicative_weights",
+      "collapse_rate": 0.25,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "oracle",
+      "collapse_rate": 0.25,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "random_dictator",
+      "collapse_rate": 0.25,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "self_consistency",
+      "collapse_rate": 0.25,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "supervisor_rerank",
+      "collapse_rate": 0.25,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    },
+    {
+      "adversary_type": "selfish",
+      "aggregator": "trimmed_vote",
+      "collapse_rate": 0.25,
+      "rel_perf": 0.0,
+      "threshold": 0.5
+    }
+  ],
+  "regime_map_welfare": {
+    "coordinated": {
+      "low": "oracle",
+      "mid": "oracle",
+      "high": "oracle"
+    },
+    "deceptive": {
+      "low": "oracle",
+      "mid": "oracle",
+      "high": "oracle"
+    },
+    "scheduled": {
+      "low": "oracle",
+      "mid": "oracle",
+      "high": "oracle"
+    },
+    "selfish": {
+      "low": "oracle",
+      "mid": "oracle",
+      "high": "oracle"
+    }
+  }
+}

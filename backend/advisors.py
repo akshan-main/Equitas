@@ -12,12 +12,15 @@ from dataclasses import dataclass
 from typing import List
 
 import numpy as np
+from .logging_utils import log_conversation
 
 from autogen_agentchat.agents import AssistantAgent
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
 from .config import CLASS_IDS, OPENAI_MODEL
 from .world import Crisis
+from .openai_utils import run_with_backoff
+
 
 
 @dataclass
@@ -73,12 +76,25 @@ Where <ID> is exactly one of: {valid_ids_str}.
 Do **not** output anything after the ACTION_ID line.
 """
 
-        result = await self.agent.run(task=task)
+        result = await run_with_backoff(self.agent, task=task)
         # TaskResult.messages -> list of BaseChatMessage; last is final.
         final_msg = result.messages[-1]
         content = getattr(final_msg, "content", "")
 
+        log_conversation(
+            {
+                "mode": "kalilopolis",
+                "role": "advisor",
+                "advisor_id": self.class_id,
+                "corrupted": self.corrupted,
+                "crisis_id": crisis.id,
+                "task": task,
+                "response": content,
+            }
+        )
+
         return _parse_action_id_from_text(content, action_ids)
+
 
 
 def _parse_action_id_from_text(text: str, valid_ids: List[str]) -> str:

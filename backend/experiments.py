@@ -30,13 +30,16 @@ import matplotlib.pyplot as plt
 from .simulate import SimulationConfig, run_simulation
 from .robust_stats import trimmed_mean, bootstrap_ci
 
+# backend/experiments.py
 
-# You can tweak these for bigger experiments
-JUDGE_EPSILONS = [0.0, 0.25, 0.5, 0.75]
-ADVISOR_EPSILON = 0.25
+# make one *strongly* corrupted setting and focus on it
+JUDGE_EPSILONS = [0.25,0.5,0.75]       # ~3 out of 4 judges corrupted
 
-NUM_RUNS_PER_EPSILON = 3
-NUM_CRISES = 15  # bump this to 100+ for serious paper experiments
+ADVISOR_EPSILON = 0.25        # leave as is; advisors don't affect judge spectral much
+
+NUM_RUNS_PER_EPSILON = 2      
+NUM_CRISES = 6               
+
 
 
 async def run_experiments_async():
