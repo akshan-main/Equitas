@@ -1,0 +1,1272 @@
+\documentclass[10pt,twocolumn]{article}
+
+% Self-contained arXiv-style formatting — paste into Overleaf and compile
+\usepackage[top=1in, bottom=1in, left=0.75in, right=0.75in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{times}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\usepackage{multirow}
+\usepackage{subcaption}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{abstract}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{float}
+
+% --- Typography ---
+\captionsetup{font=small,labelfont=bf}
+\setlength{\columnsep}{0.3in}
+\setlength{\parskip}{0.0em}
+\setlength{\parindent}{1em}
+
+% --- Section formatting ---
+\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.8em}{}
+\titlespacing*{\section}{0pt}{1.2ex plus 0.4ex minus 0.2ex}{0.8ex plus 0.2ex}
+\titlespacing*{\subsection}{0pt}{1.0ex plus 0.3ex minus 0.1ex}{0.6ex plus 0.1ex}
+
+% --- Abstract formatting ---
+\renewcommand{\abstractnamefont}{\normalfont\bfseries}
+\renewcommand{\abstracttextfont}{\normalfont\small}
+
+% --- Headers ---
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[C]{\thepage}
+
+\title{Equitas: A Benchmark for Corruption-Robust Aggregation\\in Hierarchical Multi-LLM Committees}
+
+\author{
+  Akshan Krithick \\
+  University of Washington \\
+  \href{mailto:akshankrithick305@gmail.com}{\texttt{akshan3@uw.edu}}
+}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+% ===========================================================================
+\begin{abstract}
+% ===========================================================================
+
+Large language model (LLM) committees, ensembles of model instances whose
+outputs are aggregated into a single decision, are increasingly deployed for
+high-stakes tasks. Yet virtually all existing ensemble methods assume that
+every participating agent is honest. We present \textsc{Equitas}, an
+open-source benchmark that stress-tests aggregation strategies under
+adversarial corruption in hierarchical multi-LLM committees. A three-level
+hierarchy of LLM agents (class members, class leaders, and inter-class
+judges) governs a simulated multi-stakeholder city while a configurable
+fraction $\varepsilon$ of agents is corrupted by one of four adversary types
+(selfish, coordinated, scheduled, deceptive). We evaluate nine aggregation
+baselines plus an oracle across five experiment suites. The primary
+full-hierarchy corruption sweep alone requires 103{,}776 OpenAI Batch API
+requests. Our principal observations are: (i) at
+$\varepsilon = 0.75$, supervisor rerank retains 99.6\% of its clean-setting
+utility while non-adaptive methods lose over five percentage points; (ii) the
+hierarchical architecture provides a 1.3--1.4\,pp utility advantage over flat
+voting when $\varepsilon \geq 0.5$; and (iii) no single aggregation method
+dominates across all corruption regimes among non-oracle baselines. All results are obtained with
+GPT-4o-mini; whether these patterns generalise to other model families
+remains an open question. Code and data are publicly available.\footnote{%
+  Code: \url{https://github.com/akshan-main/Equitas}. \;
+  Data: \url{https://huggingface.co/datasets/akshan-main/Equitas}.}
+
+\end{abstract}
+
+% ===========================================================================
+\section{Introduction}
+\label{sec:intro}
+% ===========================================================================
+
+Multi-agent LLM systems aggregate the outputs of several model instances to
+improve reliability, coverage, and factual accuracy
+\cite{wang2023selfconsistency, du2023debate, li2024more}. Applications
+range from collaborative code generation to multi-perspective policy
+deliberation. A growing body of work demonstrates that ensembling multiple
+LLM responses can outperform any single response, mirroring classical results
+on committee machines and mixture-of-experts.
+
+A critical yet under-explored question is: \emph{what happens when some
+agents in the committee are corrupted?} Corruption can arise through prompt
+injection attacks, fine-tuning poisoning, supply-chain compromise of model
+weights, or gradual model degradation after deployment. In any of these
+scenarios, a subset of agents may produce outputs that are systematically
+misleading, and the aggregation mechanism must cope with this adversarial
+input.
+
+Two lines of prior work are relevant but insufficient. On the theoretical
+side, the multiplicative-weights (MW) update framework
+\cite{arora2012multiplicative} provides regret bounds of the form
+\begin{equation}
+  R_T \;=\; O\!\left(\sqrt{T \ln n}\right),
+  \label{eq:mw_regret}
+\end{equation}
+where $T$ is the number of rounds and $n$ is the number of experts. However,
+MW assumes scalar losses over a fixed action set, assumptions that break
+down when experts produce free-form natural-language recommendations. On the
+empirical side, LLM ensemble methods such as
+LLM-Blender~\cite{jiang2023llmblender} and
+FrugalGPT~\cite{chen2023frugalgpt} demonstrate effective aggregation
+strategies but assume all participating agents are honest.
+
+We introduce \textsc{Equitas}, a benchmark designed to bridge this gap. Our
+contributions are as follows:
+
+\begin{enumerate}[leftmargin=*,itemsep=3pt]
+\item A \textbf{hierarchical multi-LLM governance simulation}
+  (Section~\ref{sec:environment}) in which class members, class leaders, and
+  inter-class judges deliberate over a Plato-inspired multi-stakeholder city.
+  The environment features inter-class tension by design: no single action
+  simultaneously maximises utility for all stakeholder groups.
+
+\item A \textbf{configurable adversary framework}
+  (Section~\ref{sec:adversaries}) with four corruption strategies (selfish,
+  coordinated, scheduled, and deceptive) applied at corruption rates
+  $\varepsilon \in \{0, 0.25, 0.5, 0.75\}$.
+
+\item A \textbf{systematic empirical evaluation} of ten aggregation methods
+  across five experiment suites (Section~\ref{sec:results}), encompassing
+  corruption sweeps, recovery dynamics, committee-size scaling, architectural
+  comparisons, and welfare--fairness Pareto analysis.
+\end{enumerate}
+
+We emphasise several important caveats upfront. All experiments use a single
+model (GPT-4o-mini). We do not claim that the observed rankings generalise to
+other model families or to real-world deployments. The governance environment,
+while designed to create meaningful inter-class trade-offs, is synthetic.
+With 3--5 runs per condition, the 90\% bootstrap confidence intervals are
+wide, and most pairwise differences between non-oracle methods are not
+statistically significant.
+
+% ===========================================================================
+\section{Related Work}
+\label{sec:related}
+% ===========================================================================
+
+\paragraph{Multi-agent LLM systems.}
+Self-consistency \cite{wang2023selfconsistency} samples a single LLM $K$
+times and takes the majority answer, improving chain-of-thought reasoning
+without any inter-agent communication. LLM-Blender
+\cite{jiang2023llmblender} goes further by training a pairwise ranker over
+outputs from heterogeneous LLMs, followed by a generative fusion step.
+Multi-agent debate \cite{du2023debate, liang2023encouraging} has agents
+iteratively refine their answers through argumentation, improving factuality
+on reasoning benchmarks. Li et al.\ \cite{li2024more} show that simply
+scaling the number of agents can improve performance, a finding our scaling
+experiments revisit under adversarial conditions. Critically, all of these
+works assume that every participating agent is honest.
+
+\paragraph{Robust aggregation theory.}
+The multiplicative-weights update method \cite{arora2012multiplicative} is a
+foundational online learning algorithm that tracks expert performance and
+down-weights poor performers. Its regret guarantee
+(Equation~\ref{eq:mw_regret}) holds even when a constant fraction of experts
+are adversarial, provided losses are bounded and observable. Trimmed-mean and
+median-of-means estimators \cite{lugosi2019mean} offer breakdown-point
+guarantees for robust estimation under heavy-tailed distributions. Whether
+these theoretical properties translate to LLM committees, where
+``experts'' produce structured natural language and losses must be derived
+post-hoc, is precisely the question Equitas is designed to investigate.
+
+\paragraph{LLM robustness benchmarks.}
+AdvBench \cite{zou2023universal} and HarmBench \cite{mazeika2024harmbench}
+evaluate the robustness of individual models to adversarial prompts designed
+to elicit harmful outputs. These benchmarks test \emph{input} robustness of
+a \emph{single} model. In contrast, Equitas tests \emph{aggregation}
+robustness when \emph{agents themselves} are adversarial, a fundamentally
+different threat model that operates at the system level rather than the
+model level.
+
+\paragraph{Byzantine-tolerant distributed learning.}
+Byzantine-tolerant gradient aggregation \cite{blanchard2017machine} addresses
+adversarial workers in distributed stochastic gradient descent by filtering
+or robustly aggregating gradient updates. The setting is analogous to ours
+in that a fraction of workers are adversarial, but the medium differs:
+Byzantine ML operates on gradient vectors in $\mathbb{R}^d$, whereas our
+agents produce natural-language recommendations that must be parsed,
+evaluated, and compared.
+
+% ===========================================================================
+\section{The Equitas Benchmark}
+\label{sec:benchmark}
+% ===========================================================================
+
+\subsection{Governance Environment}
+\label{sec:environment}
+
+The benchmark is built around a simulated city inspired by Plato's
+\emph{Republic}, comprising three citizen classes:
+\begin{equation}
+  \mathcal{C} = \{\text{guardian},\; \text{auxiliary},\; \text{producer}\}.
+  \label{eq:classes}
+\end{equation}
+Each round $t \in \{1, \ldots, T\}$, a crisis is sampled from four axes:
+resource scarcity, external threat, inequality, and economic instability. The
+committee must select one of three candidate actions, $a \in \{1, 2, 3\}$.
+
+For class $c$ and action $a$ at round $t$, we first compute a class-specific
+score
+\begin{equation}
+  s_c(a,t) =
+  \sum_{k=1}^{4} w^{\text{axis}}_{c,k}\, z_{t,k}
+  \;+\;
+  \sum_{d=1}^{4} w^{\text{policy}}_{c,d}\, p_{a,d},
+  \label{eq:utility_score}
+\end{equation}
+where $z_{t,k}$ are crisis-axis values at round $t$ and $p_{a,d}$ are the
+policy-dimension values for action $a$. Per-class utility is then
+\begin{equation}
+  u_c(a,t) = \sigma\!\left(s_c(a,t)\right),
+  \label{eq:utility}
+\end{equation}
+where $\sigma$ is the sigmoid function. The city-wide utility is the arithmetic mean
+over classes:
+\begin{equation}
+  U(a,t) = \frac{1}{|\mathcal{C}|} \sum_{c \in \mathcal{C}} u_c(a,t).
+  \label{eq:city_utility}
+\end{equation}
+
+The class-specific axis and policy weights are designed so that actions exhibit
+inter-class tension: the action that is optimal for one class is generally
+suboptimal for another. This tension is what makes aggregation non-trivial
+and fairness-relevant.
+
+\paragraph{Fairness metrics.}
+We track three fairness measures computed over the class-level utilities
+$\{u_c(a,t)\}_{c \in \mathcal{C}}$:
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+  \item \textbf{Jain's fairness index:}
+    $J = \left(\sum_c u_c\right)^2 \Big/ \left(|\mathcal{C}| \sum_c u_c^2\right)$,
+    ranging from $1/|\mathcal{C}|$ (maximally unfair) to $1$ (perfectly fair).
+  \item \textbf{Worst-group utility:} $\min_{c \in \mathcal{C}} u_c(a,t)$.
+  \item \textbf{Unfairness gap:}
+    $\max_{c} u_c(a,t) - \min_{c} u_c(a,t)$.
+\end{itemize}
+
+\subsection{Hierarchical Architecture}
+\label{sec:hierarchy}
+
+The committee is organised into a two-level hierarchy
+(Figure~\ref{fig:corruption_sweep} header):
+
+\paragraph{Level 1 (intra-class aggregation).}
+Each class $c \in \mathcal{C}$ has $N = 7$ members (by default) who
+independently recommend actions via LLM calls. A class-level aggregator
+selects the preferred action from these recommendations, and the class
+\emph{leader} produces a proposal consisting of the chosen action and a
+natural-language rationale.
+
+\paragraph{Level 2 (inter-class aggregation).}
+The three class proposals are forwarded to a panel of $M = 5$ judges, each
+of which independently evaluates them via an LLM call and votes for one. A
+\emph{governor}, a purely algorithmic aggregator with no LLM call, makes
+the final decision based on the judges' votes.
+
+This architecture requires approximately $3N + 3 + M = 29$ LLM calls per
+round (21 members, 3 leaders, 5 judges), with the governor being
+deterministic and auditable.
+
+\paragraph{Two evaluation protocols.}
+We distinguish two protocols for evaluating aggregation methods:
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+  \item \textbf{Full-Hierarchy (FH):} The aggregation method under test
+    controls \emph{both} the intra-class (Level~1) and inter-class (Level~2)
+    aggregation. This is the primary evaluation protocol.
+  \item \textbf{Governor-Only (GO):} A fixed trimmed-vote rule is used at
+    Level~1, and only the Level~2 aggregation varies. This serves as a
+    diagnostic ablation (see Appendix~\ref{sec:go_ablation}).
+\end{itemize}
+
+\subsection{Adversary Types}
+\label{sec:adversaries}
+
+A fraction $\varepsilon \in \{0, 0.25, 0.5, 0.75\}$ of agents are replaced
+by adversaries. We implement four adversary types of increasing
+sophistication:
+
+\begin{enumerate}[leftmargin=*,itemsep=3pt]
+\item \textbf{Selfish.} The corrupted agent recommends the action that
+  maximises its own class's utility $u_c(a)$, disregarding the city-wide
+  objective. Because selfish agents still optimise \emph{some} legitimate
+  utility, this is the mildest form of corruption.
+
+\item \textbf{Coordinated.} All corrupted agents collude to push the same
+  action, specifically the action that is worst for city-wide utility.
+  This simulates a coordinated attack where adversaries agree on a common
+  strategy.
+
+\item \textbf{Adaptive (scheduled).} Corrupted agents behave honestly for
+  the first $K$ rounds to build trust (accumulating high MW weights), then
+  switch to adversarial behaviour. This directly targets the trust
+  mechanisms of adaptive aggregators.
+
+\item \textbf{Deceptive.} Corrupted agents recommend the wrong action
+  \emph{and} generate a persuasive LLM-written rationale to justify it.
+  This is the most sophisticated attack, targeting the judge layer's ability
+  to evaluate proposal quality.
+\end{enumerate}
+
+\subsection{Aggregation Methods}
+\label{sec:aggregators}
+
+We evaluate nine methods plus an oracle ceiling, summarised in
+Table~\ref{tab:methods}. These span three categories: non-adaptive methods
+that treat all agents equally, adaptive methods that learn from past
+performance, and oracle baselines that use privileged information.
+
+The central adaptive method is multiplicative weights (MW), where each agent
+$i$ maintains a weight $w_i^{(t)}$ updated after each round:
+\begin{equation}
+  w_i^{(t+1)} = w_i^{(t)} \cdot \exp\!\left(-\eta \, \ell_i^{(t)}\right),
+  \label{eq:mw_update}
+\end{equation}
+where $\eta$ is the learning rate and $\ell_i^{(t)}$ is the per-agent loss.
+The loss is a weighted combination of welfare and fairness components:
+\begin{equation}
+  \ell_i^{(t)} = \alpha \, \ell_{\text{welfare}}^{(t)}
+                + \beta \, \ell_{\text{fairness}}^{(t)},
+  \label{eq:mw_loss}
+\end{equation}
+with defaults $\alpha = 1$, $\beta = 0.5$, $\eta = 1$. In the FH protocol,
+MW is applied at both the intra-class (member weights) and inter-class
+(judge weights) levels.
+
+We define the \textbf{robustness ratio} of an aggregation method as:
+\begin{equation}
+  \rho = \frac{U(\varepsilon = 0.75)}{U(\varepsilon = 0)},
+  \label{eq:robustness}
+\end{equation}
+i.e., the fraction of clean-setting utility retained at the highest
+corruption rate.
+
+\begin{table}[!ht]
+\centering
+\scriptsize
+\caption{Aggregation methods evaluated in Equitas. Non-adaptive methods use
+  fixed, equal weights. Adaptive methods adjust weights based on past
+  performance. Oracle methods use privileged information.}
+\label{tab:methods}
+\begin{tabular}{@{}llp{3.5cm}@{}}
+\toprule
+Method & Category & Description \\
+\midrule
+Majority vote     & Non-adaptive & Equal-weight plurality \\
+Self-consistency  & Non-adaptive & Same LLM sampled $K{=}5$ times \\
+Random dictator   & Non-adaptive & Pick one agent uniformly \\
+EMA trust         & Adaptive   & Exponential moving avg.\ of $1 - \ell_i$ \\
+Trimmed vote      & Adaptive   & Drop worst 20\%, then vote \\
+Conf.\ weighted   & Adaptive   & Harmonic weights from cumulative loss \\
+MW                & Adaptive   & $w_i \gets w_i \exp(-\eta \ell_i)$ \\
+Supervisor rerank & Adaptive   & Follow-the-leader (delegate to lowest-loss agent) \\
+Oracle UB         & Oracle     & Best-of-$K$ with oracle weights \\
+Oracle            & Oracle     & Hindsight-optimal action each round \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===========================================================================
+\section{Experimental Setup}
+\label{sec:experiments}
+% ===========================================================================
+
+All experiments use GPT-4o-mini (temperature 0.7, max 512 tokens). We use
+the OpenAI Batch API for large sweep runs and asynchronous online calls for
+auxiliary suites (recovery, scaling, architecture, Pareto), with full
+record/replay logs in both cases. Each condition is repeated across 3--5 independent runs
+with different random seeds. We report trimmed means and 90\% bootstrap
+confidence intervals throughout.
+
+\subsection{Experiment 1: Corruption Sweep}
+\label{sec:exp_sweep}
+
+The primary experiment crosses corruption rate $\varepsilon \in \{0, 0.25,
+0.5, 0.75\}$ with all four adversary types, yielding $4 \times 4 = 16$
+conditions. Each aggregator is evaluated across 5 runs of $T = 40$ rounds
+each, for a total of 80 runs per aggregator.
+
+\subsection{Experiment 2: Recovery from Mid-Run Corruption}
+\label{sec:exp_recovery}
+
+To study how aggregation methods respond to sudden adversarial onset, we run
+$T = 40$ rounds with $\varepsilon = 0$ for the first 20 rounds, then switch
+to $\varepsilon = 0.5$ (scheduled adversary) for rounds 21--40. This tests
+whether adaptive methods can detect and recover from corruption after having
+built trust during a clean phase.
+
+\subsection{Experiment 3: Committee-Size Scaling}
+\label{sec:exp_scaling}
+
+We vary the number of members per class, $N \in \{3, 5, 7, 10\}$, at fixed
+corruption $\varepsilon = 0.5$ with selfish adversaries. This tests
+whether larger committees dilute the influence of adversarial agents or
+whether prompt crowding degrades leader quality.
+
+\subsection{Experiment 4: Hierarchical vs.\ Flat Architecture}
+\label{sec:exp_hvf}
+
+We compare the full hierarchy (members $\to$ leaders $\to$ judges $\to$
+governor) against a flat architecture in which all $3N = 21$ agents vote
+directly, with no intermediate leader or judge layer. Both architectures use
+all ten aggregators at $\varepsilon \in \{0, 0.25, 0.5, 0.75\}$.
+
+\subsection{Experiment 5: Welfare--Fairness Pareto Sweep}
+\label{sec:exp_pareto}
+
+We sweep the MW loss parameters
+$(\alpha, \beta) \in \{0, 0.25, 0.5, 0.75, 1.0\}^2$ (25 grid points) to
+trace the Pareto frontier of the welfare--fairness trade-off. This reveals
+which combinations of welfare weight and fairness weight produce
+Pareto-optimal outcomes, and how sensitive MW is to these hyperparameters.
+
+% ===========================================================================
+\section{Results}
+\label{sec:results}
+% ===========================================================================
+
+\subsection{Overall Leaderboard}
+\label{sec:leaderboard}
+
+Table~\ref{tab:leaderboard} presents the aggregate leaderboard under the FH
+protocol, averaging across all corruption rates and adversary types. The
+oracle, which selects the hindsight-optimal action each round, achieves a
+mean utility of 0.466 and has a confidence interval that is nearly disjoint
+from the rest (with slight overlap with supervisor rerank). Supervisor rerank (0.449) and MW (0.446)
+occupy the next two positions, but their confidence intervals overlap both
+with each other and with several lower-ranked methods. Ranks 4 through 10
+span a range of only 3\,pp (0.436--0.439), which is well within the
+confidence intervals, effectively a statistical tie.
+
+Fairness scores (Jain's index) are remarkably uniform across methods,
+ranging from 0.923 to 0.935. This indicates that, in this environment,
+aggregation method choice has a much larger impact on welfare than on
+fairness.
+
+\begin{table}[!ht]
+\centering
+\scriptsize
+\caption{FH leaderboard averaged over all conditions. Confidence intervals
+  for ranks 2--10 overlap; most pairwise differences between non-oracle
+  methods are \emph{not} statistically significant.}
+\label{tab:leaderboard}
+\begin{tabular}{@{}clcccc@{}}
+\toprule
+Rank & Aggregator & Utility & 90\% CI & Fairness & Robustness \\
+\midrule
+1  & Oracle       & .4655 & [.456,\,.475] & .923 & .995 \\
+2  & Supervisor   & .4488 & [.439,\,.459] & .935 & .996 \\
+3  & MW           & .4458 & [.436,\,.456] & .935 & .955 \\
+4  & Random       & .4387 & [.429,\,.449] & .933 & .930 \\
+5  & Conf.\ wt    & .4384 & [.429,\,.448] & .934 & .890 \\
+6  & Oracle UB    & .4378 & [.428,\,.448] & .934 & .890 \\
+7  & EMA          & .4371 & [.427,\,.447] & .934 & .884 \\
+8  & Trimmed      & .4371 & [.427,\,.447] & .934 & .885 \\
+9  & Majority     & .4364 & [.427,\,.446] & .933 & .884 \\
+10 & Self-cons    & .4357 & [.426,\,.445] & .933 & .887 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------------
+\subsection{Corruption Degradation}
+\label{sec:corruption_sweep}
+
+\begin{figure*}[!ht]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_corruption_sweep.png}
+\caption{City utility as a function of corruption rate $\varepsilon$,
+  broken out by adversary type (FH protocol). Each curve corresponds to one
+  aggregation method; shaded bands indicate 90\% bootstrap CIs. At
+  $\varepsilon = 0.75$, supervisor rerank (cyan) maintains near-constant
+  utility while non-adaptive methods (majority, self-consistency) drop
+  sharply. The separation is most pronounced under coordinated and deceptive
+  adversaries.}
+\label{fig:corruption_sweep}
+\end{figure*}
+
+Table~\ref{tab:corruption} and Figure~\ref{fig:corruption_sweep} present
+the core corruption-sweep results. Three regimes emerge.
+
+At \textbf{low corruption} ($\varepsilon \leq 0.25$), all methods perform
+within approximately 1\,pp of each other (utility range 0.446--0.453).
+Adversarial agents are too few to overcome honest majorities, and even
+non-adaptive methods function adequately.
+
+At \textbf{moderate corruption} ($\varepsilon = 0.50$), a gap begins to
+open. Non-adaptive methods start to degrade (e.g., majority vote drops from
+0.452 to 0.444), while MW and supervisor maintain performance.
+
+At \textbf{high corruption} ($\varepsilon = 0.75$), the methods sharply
+diverge. Non-adaptive methods collapse to approximately 0.400 (a drop of
+5.2\,pp from their clean-setting utility), while supervisor rerank retains
+0.448, yielding a robustness ratio $\rho = 0.996$. MW degrades more
+moderately to 0.432 ($\rho = 0.955$). Random dictator achieves $\rho =
+0.930$, explained by its uniform selection: at $\varepsilon = 0.75$, it
+still selects an honest agent 25\% of the time, providing a baseline
+corruption tolerance.
+
+\begin{table}[!ht]
+\centering
+\scriptsize
+\caption{Utility by corruption rate (FH, averaged over adversary types).
+  Robustness $\rho$ is the ratio of $\varepsilon = 0.75$ to
+  $\varepsilon = 0$ utility (Equation~\ref{eq:robustness}).}
+\label{tab:corruption}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+Aggregator & $\varepsilon{=}0$ & $0.25$ & $0.50$ & $0.75$ & $\rho$ \\
+\midrule
+Oracle     & .4662 & .4661 & .4660 & .4637 & .995 \\
+Supervisor & .4495 & .4482 & .4502 & .4475 & .996 \\
+MW         & .4519 & .4497 & .4501 & .4316 & .955 \\
+Conf.\ wt  & .4519 & .4496 & .4496 & .4023 & .890 \\
+EMA        & .4520 & .4498 & .4470 & .3997 & .884 \\
+Trimmed    & .4516 & .4500 & .4471 & .3996 & .885 \\
+Majority   & .4522 & .4494 & .4442 & .3997 & .884 \\
+Self-cons  & .4517 & .4493 & .4412 & .4007 & .887 \\
+Oracle UB  & .4528 & .4502 & .4454 & .4029 & .890 \\
+Random     & .4508 & .4464 & .4381 & .4193 & .930 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------------
+\subsection{Adversary Type Analysis}
+\label{sec:adversary_analysis}
+
+Table~\ref{tab:adversary} breaks down utility by adversary type, averaging
+over all corruption rates. Several patterns are worth noting.
+
+\textbf{Selfish adversaries} are the least damaging. Because selfish agents
+still optimise a legitimate (class-level) utility, their recommendations are
+not entirely destructive, and all methods perform within a narrow band
+(0.447--0.450 for non-oracle methods).
+
+\textbf{Coordinated and deceptive adversaries} are the most damaging,
+causing 2--3\,pp drops for non-adaptive methods relative to the selfish
+condition. The coordinated attack is effective because all corrupted agents
+push the same harmful action, creating a strong adversarial signal.
+Deceptive adversaries compound this with persuasive rationales that can
+mislead the judge layer.
+
+An interesting \textbf{crossover} occurs between supervisor and MW.
+Supervisor rerank outperforms MW against coordinated attacks by 0.6\,pp
+(0.452 vs.\ 0.446), likely because the supervisor LLM can detect
+semantically implausible coordinated proposals. Conversely, MW outperforms
+supervisor against selfish adversaries by 0.3\,pp (0.449 vs.\ 0.447),
+where the adversarial proposals are more plausible and the weight-based
+filtering of MW is more effective.
+
+\begin{table}[!ht]
+\centering
+\scriptsize
+\caption{Utility by adversary type (FH, all $\varepsilon$ averaged).}
+\label{tab:adversary}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Aggregator & Selfish & Coord. & Sched. & Decep. \\
+\midrule
+Oracle     & .462 & .467 & .468 & .465 \\
+Supervisor & .447 & .452 & .450 & .447 \\
+MW         & .449 & .446 & .446 & .442 \\
+Conf.\ wt  & .450 & .433 & .439 & .432 \\
+EMA        & .450 & .432 & .438 & .429 \\
+Trimmed    & .449 & .433 & .438 & .429 \\
+Majority   & .450 & .431 & .437 & .428 \\
+Self-cons  & .450 & .430 & .435 & .428 \\
+Oracle UB  & .450 & .432 & .439 & .430 \\
+Random     & .447 & .434 & .440 & .434 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------------
+\subsection{Regime-Specific Winners}
+\label{sec:regime}
+
+A recurring theme in our results is that \emph{no single non-oracle method
+dominates across all regimes}. Table~\ref{tab:regime} shows
+selected regime cells with the strongest non-oracle contender and its
+utility gap to oracle.
+
+At $\varepsilon = 0$ (no corruption), non-oracle winners are typically
+non-adaptive or lightly adaptive methods (e.g., self-consistency, EMA,
+oracle upper bound), and margins between non-oracle methods are tiny
+(often $< 0.001$). At $\varepsilon \geq 0.5$, supervisor rerank wins in
+5 out of 8 high-corruption cells for the welfare criterion, with the largest
+separation appearing at $\varepsilon = 0.75$ under coordinated, deceptive,
+and scheduled adversaries.
+
+\begin{table}[!ht]
+\centering
+\scriptsize
+\caption{Selected welfare regimes: strongest non-oracle method and its gap to
+  oracle.}
+\label{tab:regime}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Adversary & $\varepsilon$ & Best non-oracle & Oracle gap \\
+\midrule
+Coordinated & 0.00 & Self-Cons  & .014 \\
+Coordinated & 0.75 & Supervisor & .014 \\
+Deceptive   & 0.50 & MW         & .019 \\
+Deceptive   & 0.75 & Supervisor & .017 \\
+Scheduled   & 0.75 & Supervisor & .020 \\
+Selfish     & 0.75 & Conf-Wt    & .010 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------------
+\subsection{Recovery from Corruption Onset}
+\label{sec:recovery}
+
+Figure~\ref{fig:recovery} and Table~\ref{tab:recovery} present the recovery
+experiment, in which corruption is introduced at round~20 of a 40-round
+simulation.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_recovery.png}
+\caption{\textbf{Left:} Per-round city utility over 40 rounds. The red
+  dashed line marks corruption onset at round~20. All methods degrade;
+  per-round noise is typical for small committees. \textbf{Right:} MW
+  inter-class judge weights over time. After corruption onset, MW
+  progressively down-weights corrupted judges, though convergence is slow.}
+\label{fig:recovery}
+\end{figure}
+
+\begin{table}[!ht]
+\centering
+\scriptsize
+\caption{Recovery from corruption onset at round~20 ($\varepsilon = 0.5$,
+  scheduled), for selected aggregators. ``Late U'' is the mean utility over
+  the final 5 rounds. Recovery gap $= $ Late U $-$ Pre-onset U.}
+\label{tab:recovery}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Aggregator & Pre U & Post U & Late U & Rec.\ Gap \\
+\midrule
+Oracle     & .462 & .447 & .443 & $-$.019 \\
+MW         & .451 & .427 & .419 & $-$.032 \\
+Supervisor & .447 & .425 & .414 & $-$.032 \\
+EMA        & .451 & .427 & .424 & $-$.027 \\
+Trimmed    & .451 & .430 & .425 & $-$.026 \\
+Majority   & .451 & .422 & .422 & $-$.029 \\
+Self-cons  & .452 & .404 & .401 & $-$.051 \\
+Random     & .451 & .413 & .398 & $-$.052 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A notable finding is that the simplest robust methods, trimmed vote
+and EMA, show the smallest recovery gaps ($-$0.026 and $-$0.027,
+respectively), outperforming both MW and supervisor ($-$0.032 each). This is
+somewhat counterintuitive. The explanation lies in the \emph{trust
+reservoir} problem: during the honest first 20 rounds, MW assigns high
+weights to all agents, including those that will later become adversarial.
+After corruption onset, MW must gradually erode these accumulated weights
+through the exponential update (Equation~\ref{eq:mw_update}), a process
+that is inherently slow when the initial trust is high. Trimmed vote avoids
+this issue entirely by simply dropping the worst performers without
+maintaining a trust history.
+
+Self-consistency and random dictator show the largest recovery gaps ($-$0.051
+and $-$0.052), as neither has any mechanism to down-weight corrupted agents.
+
+% ---------------------------------------------------------------------------
+\subsection{Committee-Size Scaling}
+\label{sec:scaling}
+
+Figure~\ref{fig:scaling} and Table~\ref{tab:scaling} examine how committee
+size affects performance under corruption.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_scaling.png}
+\caption{\textbf{Left:} City utility vs.\ number of members per class $N$.
+  \textbf{Right:} Jain's fairness index vs.\ $N$. Both metrics exhibit an
+  inverted-U, peaking at $N = 7$ and degrading at $N = 10$.}
+\label{fig:scaling}
+\end{figure}
+
+\begin{table}[!ht]
+\centering
+\scriptsize
+\caption{Utility by committee size ($\varepsilon = 0.5$, selfish), shown for
+  selected aggregators.}
+\label{tab:scaling}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Aggregator & $N{=}3$ & $N{=}5$ & $N{=}7$ & $N{=}10$ \\
+\midrule
+Oracle     & .463 & .476 & .478 & .469 \\
+MW         & .446 & .464 & .466 & .455 \\
+Supervisor & .447 & .459 & .465 & .450 \\
+Majority   & .447 & .463 & .466 & .458 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All methods exhibit a consistent inverted-U pattern, with performance peaking
+at $N = 7$ and declining at $N = 10$. The improvement from $N = 3$ to
+$N = 7$ is expected: larger committees dilute the adversarial fraction,
+giving the aggregator more honest signal to work with. The degradation at
+$N = 10$ is more surprising and likely reflects \emph{prompt crowding}: the
+class leader must synthesise recommendations from 10 members into a single
+proposal, and the longer prompt may degrade LLM generation quality.
+
+Importantly, \emph{all} methods, including the oracle, show this
+inverted-U, suggesting it is a property of the environment and the LLM's
+prompt-processing capacity rather than of any specific aggregation algorithm.
+
+% ---------------------------------------------------------------------------
+\subsection{Hierarchical vs.\ Flat Architecture}
+\label{sec:hvf}
+
+Tables~\ref{tab:hvf} and \ref{tab:hvf_detail} compare the hierarchical and
+flat architectures.
+
+\begin{table}[!ht]
+\centering
+\scriptsize
+\caption{Hierarchical vs.\ flat (averaged over all 10 aggregators).
+  $\Delta$U is the hierarchy advantage.}
+\label{tab:hvf}
+\begin{tabular}{@{}ccccc@{}}
+\toprule
+$\varepsilon$ & Hier.\ U & Flat U & $\Delta$U & $\Delta$Fair \\
+\midrule
+0.00 & .4631 & .4631 & $-$.000 & $+$.001 \\
+0.25 & .4594 & .4598 & $-$.000 & $-$.001 \\
+0.50 & .4576 & .4435 & $+$.014 & $+$.007 \\
+0.75 & .4723 & .4592 & $+$.013 & $+$.006 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[!ht]
+\centering
+\scriptsize
+\caption{Per-aggregator hierarchy advantage at $\varepsilon = 0.75$. Every
+  method benefits from the hierarchical structure.}
+\label{tab:hvf_detail}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Aggregator & Hier.\ U & Flat U & Gap \\
+\midrule
+Oracle     & .478 & .466 & $+$.013 \\
+MW         & .474 & .459 & $+$.015 \\
+Conf-Wt    & .474 & .459 & $+$.015 \\
+EMA        & .475 & .459 & $+$.016 \\
+Supervisor & .467 & .454 & $+$.013 \\
+Majority   & .474 & .460 & $+$.014 \\
+Self-cons  & .474 & .462 & $+$.012 \\
+Oracle UB  & .472 & .457 & $+$.015 \\
+Trimmed    & .470 & .460 & $+$.010 \\
+Random     & .463 & .454 & $+$.008 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+At low corruption ($\varepsilon \leq 0.25$), the two architectures are
+essentially equivalent; the hierarchy neither helps nor hurts when most
+agents are honest. At $\varepsilon \geq 0.5$, however, the hierarchy
+provides a consistent advantage of 1.3--1.4\,pp in utility and 0.6--0.7\,pp
+in fairness. Table~\ref{tab:hvf_detail} shows that this advantage is
+present for \emph{every} aggregation method, from oracle ($+$1.3\,pp) to
+random dictator ($+$0.8\,pp). This universality suggests that the benefit is
+a \emph{structural} property of the class-leader bottleneck: by forcing
+recommendations through a leader, the hierarchy acts as an information
+filter that attenuates adversarial noise, rather than a property of any
+particular aggregation algorithm.
+
+% ---------------------------------------------------------------------------
+\subsection{Welfare--Fairness Pareto Analysis}
+\label{sec:pareto}
+
+Figure~\ref{fig:pareto} and Table~\ref{tab:pareto} present the Pareto sweep
+over MW loss parameters $(\alpha, \beta)$.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_pareto.png}
+\caption{Welfare--fairness scatter for the MW Pareto sweep. Each point
+  represents one $(\alpha, \beta)$ configuration averaged over seeds. The
+  Pareto-optimal grid point is $(\alpha = 1.0, \beta = 0.25)$, achieving the
+  highest utility (0.479) and fairness (0.939) simultaneously.}
+\label{fig:pareto}
+\end{figure}
+
+\begin{table}[!ht]
+\centering
+\scriptsize
+\caption{Selected points from the MW Pareto sweep. The Pareto-optimal point
+  dominates all other grid points on both welfare and fairness axes.}
+\label{tab:pareto}
+\begin{tabular}{@{}ccccc@{}}
+\toprule
+$\alpha$ & $\beta$ & Utility & Fairness & Worst-Grp \\
+\midrule
+\multicolumn{5}{l}{\emph{Pareto-optimal:}} \\
+1.00 & 0.25 & \textbf{.479} & \textbf{.939} & \textbf{.334} \\
+\midrule
+1.00 & 1.00 & .462 & .935 & .316 \\
+1.00 & 0.00 & .423 & .923 & .270 \\
+0.00 & 0.00 & .432 & .928 & .284 \\
+\midrule
+\multicolumn{5}{l}{\emph{Default ($\alpha = 1$, $\beta = 0.5$):}} \\
+1.00 & 0.50 & .451 & .927 & .296 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The Pareto-optimal grid point is $(\alpha = 1.0, \beta = 0.25)$, achieving
+0.479 utility and 0.939 fairness, dominating all other grid points on both
+axes. This reveals a non-obvious interaction: a moderate fairness penalty
+($\beta = 0.25$) is not only good for fairness but also \emph{improves
+welfare} relative to the welfare-only configuration ($\beta = 0$, which
+yields only 0.423). The mechanism is that a small fairness pressure
+discourages actions that are excellent for one class but harmful to others,
+steering the committee towards compromises that happen to achieve higher
+city-wide utility.
+
+The default configuration ($\alpha = 1$, $\beta = 0.5$) achieves 0.451
+utility, which is 2.8\,pp below the Pareto-optimal point. This suggests that
+the commonly used default is suboptimal and that even simple hyperparameter
+tuning of the loss weights can yield meaningful improvements.
+
+% ===========================================================================
+\section{Analysis and Discussion}
+\label{sec:discussion}
+% ===========================================================================
+
+\paragraph{Why does supervisor rerank work so well?}
+Supervisor rerank achieves the highest robustness ratio (0.996) by a
+substantial margin. In our implementation, supervisor rerank is an
+algorithmic follow-the-leader rule (no extra LLM): each round it delegates to
+the currently lowest cumulative-loss agent. This creates strong performance
+when quality separation is stable and corruption is persistent, because the
+aggregator rapidly commits to a high-performing agent. A key caveat is
+structural: all governor-level aggregators are algorithmic and non-corruptible
+in our threat model.
+
+\paragraph{The MW--supervisor trade-off.}
+At $\varepsilon = 0$, MW slightly outperforms supervisor (0.452
+vs.\ 0.450), as aggressive follow-the-leader commitment offers little benefit
+when most agents are already honest. The crossover occurs at
+$\varepsilon = 0.75$, where supervisor leads by 1.6\,pp (0.448 vs.\ 0.432).
+This suggests a practical deployment strategy: use MW when the corruption
+threat is low, and prefer supervisor rerank when the threat is elevated.
+
+\paragraph{The GO vs.\ FH ablation.}
+In the GO protocol, all non-oracle methods cluster at approximately 0.401
+at $\varepsilon = 0.75$, including MW and supervisor (Appendix~\ref{sec:go_ablation}). This occurs because the fixed Level-1 aggregator
+prevents these methods from exercising their adaptive advantages at the
+intra-class level. Under FH, supervisor gains $+$4.6\,pp and MW gains
+$+$3.1\,pp relative to GO. This confirms that the benefits of adaptive
+aggregation are \emph{primarily realised at the intra-class level}, where
+member-level corruption is directly observable through per-agent loss
+tracking.
+
+\paragraph{Trust reservoir and adaptive lag.}
+The recovery experiment reveals that MW's theoretical strength, tracking
+individual agent performance, becomes a liability when corruption has a
+sudden onset. The weights accumulated during the honest phase act as a
+``trust reservoir'' that corrupted agents exploit. After onset, MW
+must erode these weights via repeated multiplicative down-weighting
+(Equation~\ref{eq:mw_update}), a process that converges as
+$w_i^{(t)} \propto e^{-\eta \sum_s \ell_i^{(s)}}$, which requires multiple
+rounds of high loss to substantially reduce the weight. Stateless methods
+like trimmed vote, which simply discard the worst performers without
+considering history, are immune to this lag.
+
+% ===========================================================================
+\section{Limitations}
+\label{sec:limitations}
+% ===========================================================================
+
+\paragraph{Single model.}
+All results are obtained with GPT-4o-mini. The observed rankings may not hold
+for larger models (which may be harder to mislead), smaller models (which may
+be more susceptible), or heterogeneous committees mixing different model
+families.
+
+\paragraph{Synthetic environment.}
+The governance environment uses sigmoid utility functions and a 3-action
+space, which simplifies real-world multi-stakeholder decision-making. The
+inter-class tensions are hand-designed; natural tasks may exhibit different
+correlation structures.
+
+\paragraph{Statistical power.}
+With 3--5 runs per condition, the 90\% bootstrap confidence intervals are
+wide. Most pairwise comparisons between non-oracle methods are not
+statistically significant. We report all results to enable meta-analysis
+but caution against over-interpreting small ranking differences.
+
+\paragraph{Fixed adversary strategies.}
+Our four adversary types use fixed strategies. Real-world adversaries may
+employ mixed strategies, time-varying corruption rates, or strategically
+target specific agents based on observed system behaviour.
+
+\paragraph{Computational cost.}
+The main FH corruption sweep requires 103{,}776 OpenAI Batch API requests,
+and the full suite requires substantially more. We mitigate cost through
+batching and a record-replay architecture, but a full re-run remains
+non-trivial.
+
+\paragraph{Algorithmic governor assumption.}
+All governor-level aggregators are purely algorithmic and are not directly
+corrupted in our current threat model. Robustness under direct corruption of
+the aggregation mechanism itself remains open.
+
+% ===========================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+% ===========================================================================
+
+We have presented \textsc{Equitas}, a benchmark for evaluating the robustness
+of aggregation methods in hierarchical multi-LLM committees under adversarial
+corruption. Across five experiment suites, we
+observe the following:
+
+\begin{enumerate}[leftmargin=*,itemsep=3pt]
+\item \textbf{Adaptive aggregation provides meaningful robustness.}
+  Non-adaptive methods (majority vote, self-consistency) collapse to
+  approximately 0.400 utility at $\varepsilon = 0.75$, a loss of 5.2\,pp
+  from their clean-setting performance. MW retains 0.432 and supervisor
+  retains 0.448.
+
+\item \textbf{Supervisor rerank is the most robust method in our evaluation,}
+  retaining 99.6\% of clean utility at $\varepsilon = 0.75$; it is a purely
+  algorithmic rule in our implementation.
+
+\item \textbf{Hierarchy provides a structural robustness benefit} of
+  1.3--1.4\,pp at $\varepsilon \geq 0.5$, benefiting all aggregation methods
+  equally through the class-leader information bottleneck.
+
+\item \textbf{No single non-oracle method dominates all regimes.} Different
+  aggregators win under different $(\varepsilon, \text{adversary})$
+  combinations, and most pairwise differences are within confidence
+  intervals.
+
+\item \textbf{Stateless robust methods recover faster from sudden
+  corruption} than stateful methods like MW, which suffer from a trust
+  reservoir that takes time to drain.
+\end{enumerate}
+
+All code, experiment configurations, raw results, and LLM conversation logs
+are publicly released to facilitate reproduction and extension. Key
+directions for future work include evaluating across model families, testing
+corruptible governor-level aggregation mechanisms, incorporating natural-language tasks (e.g.,
+GSM8K), and developing adaptive adversaries that respond to the aggregation
+strategy.
+
+% ===========================================================================
+\appendix
+% ===========================================================================
+
+\section{GO vs.\ FH Ablation Details}
+\label{sec:go_ablation}
+
+Table~\ref{tab:go_fh} compares the GO and FH protocols. In GO mode, a fixed
+trimmed-vote rule at Level~1 masks the differences between aggregation
+methods: all non-oracle methods achieve approximately 0.438 utility overall
+and cluster at 0.401 at $\varepsilon = 0.75$. FH unlocks the adaptive
+advantages of MW and supervisor by allowing them to operate at the
+intra-class level, where per-agent corruption is directly observable.
+
+\begin{table}[H]
+\centering
+\scriptsize
+\caption{GO vs.\ FH protocol comparison. ``All'' is averaged over all
+  conditions; ``$\varepsilon = 0.75$'' isolates high corruption.}
+\label{tab:go_fh}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Aggregator & GO (all) & FH (all) & GO (.75) & FH (.75) \\
+\midrule
+Oracle     & .466 & .466 & .464 & .464 \\
+MW         & .438 & .446 & .401 & .432 \\
+Supervisor & .438 & .449 & .401 & .448 \\
+EMA        & .438 & .437 & .401 & .400 \\
+Trimmed    & .438 & .437 & .401 & .400 \\
+Majority   & .438 & .436 & .401 & .400 \\
+Self-cons  & .438 & .436 & .401 & .401 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The key insight is that supervisor rerank gains $+$4.6\,pp and MW gains
+$+$3.1\,pp when moving from GO to FH at $\varepsilon = 0.75$, while
+non-adaptive methods show negligible change. This confirms that adaptive
+aggregation at the intra-class level is the primary driver of robustness in
+the hierarchical architecture.
+
+Table~\ref{tab:go_fh_high} provides the full per-aggregator breakdown at
+$\varepsilon = 0.75$, including all ten methods. The pattern is stark: under
+GO, all non-oracle methods compress into a 0.4\,pp band (0.4006--0.4039),
+whereas under FH, the spread widens to 4.8\,pp (0.3996--0.4475). Random
+dictator is the only non-adaptive method that benefits from FH ($+$1.9\,pp),
+because its uniform selection occasionally delegates to the honest minority,
+an effect amplified when FH allows class-level filtering.
+
+\begin{table}[H]
+\centering
+\scriptsize
+\caption{Per-aggregator GO vs.\ FH comparison at $\varepsilon = 0.75$
+  (all adversary types averaged). Gap = FH $-$ GO.}
+\label{tab:go_fh_high}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Aggregator & GO (.75) & FH (.75) & Gap \\
+\midrule
+Oracle     & .4637 & .4637 & $+$.0000 \\
+Supervisor & .4013 & .4475 & $+$.0462 \\
+MW         & .4009 & .4316 & $+$.0306 \\
+Random     & .4006 & .4193 & $+$.0187 \\
+Conf-Wt    & .4009 & .4023 & $+$.0013 \\
+Self-Cons  & .4011 & .4007 & $-$.0005 \\
+Oracle UB  & .4039 & .4029 & $-$.0010 \\
+EMA        & .4008 & .3997 & $-$.0010 \\
+Trimmed    & .4009 & .3996 & $-$.0013 \\
+Majority   & .4011 & .3997 & $-$.0014 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Cross-Experiment Summary}
+\label{sec:grand}
+
+Table~\ref{tab:grand} summarises the GO vs.\ FH comparison across all five
+experiment suites. FH outperforms GO in three of five suites. The reversal
+in the Pareto suite occurs because extreme $(\alpha, \beta)$ configurations
+can destabilise MW's intra-class weighting, an effect unique to FH where MW
+operates at both levels.
+
+\begin{table}[H]
+\centering
+\scriptsize
+\caption{GO vs.\ FH protocol comparison across all experiment suites.}
+\label{tab:grand}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Experiment & GO U & FH U & $\Delta$U & $\Delta$Fair \\
+\midrule
+Sweep       & .441 & .442 & $+$.002 & $+$.001 \\
+Recovery    & .439 & .438 & $-$.001 & $+$.006 \\
+Scaling     & .423 & .459 & $+$.036 & $+$.007 \\
+Hier/Flat   & .421 & .463 & $+$.042 & $+$.006 \\
+Pareto (MW) & .456 & .427 & $-$.030 & $-$.009 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Fairness Regime Analysis}
+\label{sec:fairness_regimes}
+
+The main text focuses primarily on welfare (city utility). Here we examine
+which aggregators perform best under each regime when evaluated on fairness
+criteria. Table~\ref{tab:fairness_regime} reports the strongest non-oracle
+method for Jain's fairness index across selected regimes, while
+Table~\ref{tab:wg_regime} does the same for worst-group utility.
+
+A striking pattern emerges: supervisor rerank dominates all four
+$\varepsilon = 0.75$ cells on both fairness and worst-group criteria. At
+lower corruption, the winners are far more varied, with self-consistency,
+EMA, trimmed vote, and majority all appearing in different cells. The margins
+between the best and runner-up are typically very small (often $< 0.001$),
+reinforcing our main finding that non-oracle methods are largely
+interchangeable in benign conditions.
+
+For worst-group utility, the pattern is similar but with one notable
+difference: trimmed vote appears more frequently as a winner at moderate
+corruption ($\varepsilon = 0.25$--$0.5$), consistent with its
+breakdown-point property of discarding the most harmful agents. MW wins
+the deceptive $\varepsilon = 0.5$ cell for worst-group utility (0.308),
+suggesting that its weight tracking is particularly effective at protecting
+minority classes against persuasive adversaries.
+
+\begin{table}[H]
+\centering
+\scriptsize
+\caption{Fairness regime winners (Jain's index, FH). Best non-oracle
+  method per regime. Margin is the gap to the runner-up.}
+\label{tab:fairness_regime}
+\begin{tabular}{@{}llllr@{}}
+\toprule
+Adversary & $\varepsilon$ & Best & Jain & Margin \\
+\midrule
+Coordinated & 0.00 & Self-Cons  & .940 & .0002 \\
+Coordinated & 0.75 & Supervisor & .935 & .0027 \\
+Deceptive   & 0.00 & Conf-Wt    & .937 & .0000 \\
+Deceptive   & 0.75 & Supervisor & .939 & .0015 \\
+Scheduled   & 0.50 & EMA        & .943 & .0000 \\
+Scheduled   & 0.75 & Supervisor & .934 & .0036 \\
+Selfish     & 0.50 & Supervisor & .938 & .0013 \\
+Selfish     & 0.75 & Trimmed    & .940 & .0005 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\scriptsize
+\caption{Worst-group utility regime winners (FH). Best non-oracle method
+  per regime.}
+\label{tab:wg_regime}
+\begin{tabular}{@{}llllr@{}}
+\toprule
+Adversary & $\varepsilon$ & Best & Worst-Grp & Margin \\
+\midrule
+Coordinated & 0.00 & Self-Cons  & .315 & .0008 \\
+Coordinated & 0.75 & Supervisor & .305 & .0121 \\
+Deceptive   & 0.50 & MW         & .308 & .0005 \\
+Deceptive   & 0.75 & Supervisor & .312 & .0115 \\
+Scheduled   & 0.50 & Trimmed    & .318 & .0002 \\
+Scheduled   & 0.75 & Supervisor & .300 & .0072 \\
+Selfish     & 0.25 & Conf-Wt    & .299 & .0000 \\
+Selfish     & 0.75 & Trimmed    & .316 & .0010 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Full Pareto Grid}
+\label{sec:pareto_full}
+
+Tables~\ref{tab:pareto_util} and \ref{tab:pareto_fair} present the complete
+$5 \times 5$ Pareto grid in matrix form, with welfare weight $\alpha$ as
+rows and fairness weight $\beta$ as columns. The $\alpha = 1.0$ row
+consistently dominates. The Pareto-optimal point $(\alpha = 1.0,
+\beta = 0.25)$ achieves the highest utility (0.479) and fairness (0.939)
+simultaneously. Performance degrades substantially when $\alpha < 0.5$,
+indicating that welfare-oriented loss is essential for maintaining utility.
+
+\begin{table}[H]
+\centering
+\scriptsize
+\caption{MW Pareto grid: utility. Rows are $\alpha$, columns are $\beta$.
+  Bold marks the Pareto-optimal point.}
+\label{tab:pareto_util}
+\begin{tabular}{@{}c|ccccc@{}}
+\toprule
+ & \multicolumn{5}{c}{$\beta$} \\
+$\alpha$ & 0 & 0.25 & 0.50 & 0.75 & 1.00 \\
+\midrule
+0.00 & .432 & .414 & .425 & .430 & .431 \\
+0.25 & .426 & .421 & .424 & .416 & .422 \\
+0.50 & .403 & .416 & .407 & .422 & .406 \\
+0.75 & .417 & .414 & .440 & .413 & .423 \\
+1.00 & .423 & \textbf{.479} & .451 & .455 & .462 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\scriptsize
+\caption{MW Pareto grid: Jain's fairness index. Same layout as
+  Table~\ref{tab:pareto_util}.}
+\label{tab:pareto_fair}
+\begin{tabular}{@{}c|ccccc@{}}
+\toprule
+ & \multicolumn{5}{c}{$\beta$} \\
+$\alpha$ & 0 & 0.25 & 0.50 & 0.75 & 1.00 \\
+\midrule
+0.00 & .928 & .922 & .929 & .924 & .935 \\
+0.25 & .920 & .918 & .921 & .925 & .920 \\
+0.50 & .916 & .913 & .923 & .928 & .922 \\
+0.75 & .917 & .918 & .917 & .925 & .916 \\
+1.00 & .923 & \textbf{.939} & .927 & .928 & .935 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===========================================================================
+\bibliographystyle{unsrtnat}
+\begin{thebibliography}{12}
+
+\bibitem[Arora et~al.(2012)]{arora2012multiplicative}
+S.~Arora, E.~Hazan, and S.~Kale.
+\newblock The multiplicative weights update method: a meta-algorithm and
+  applications.
+\newblock {\em Theory of Computing}, 8(1):121--164, 2012.
+
+\bibitem[Blanchard et~al.(2017)]{blanchard2017machine}
+P.~Blanchard, E.~M.~El~Mhamdi, R.~Guerraoui, and J.~Stainer.
+\newblock Machine learning with adversaries: Byzantine tolerant gradient
+  descent.
+\newblock In {\em NeurIPS}, 2017.
+
+\bibitem[Chen et~al.(2023)]{chen2023frugalgpt}
+L.~Chen, M.~Zaharia, and J.~Zou.
+\newblock FrugalGPT: How to use large language models while reducing cost and
+  improving performance.
+\newblock {\em arXiv preprint arXiv:2305.05176}, 2023.
+
+\bibitem[Du et~al.(2023)]{du2023debate}
+Y.~Du, S.~Li, A.~Torralba, J.~B.~Tenenbaum, and I.~Mordatch.
+\newblock Improving factuality and reasoning in language models through
+  multiagent debate.
+\newblock {\em arXiv preprint arXiv:2305.14325}, 2023.
+
+\bibitem[Jiang et~al.(2023)]{jiang2023llmblender}
+D.~Jiang, X.~Ren, and B.~Y.~Lin.
+\newblock LLM-Blender: Ensembling large language models with pairwise ranking
+  and generative fusion.
+\newblock In {\em ACL}, 2023.
+
+\bibitem[Li et~al.(2024)]{li2024more}
+Z.~Li et~al.
+\newblock More agents is all you need.
+\newblock {\em arXiv preprint arXiv:2402.05120}, 2024.
+
+\bibitem[Liang et~al.(2023)]{liang2023encouraging}
+T.~Liang, Z.~He, W.~Jiao, X.~Wang, Y.~Wang, R.~Wang, Y.~Yang, Z.~Tu, and
+  S.~Shi.
+\newblock Encouraging divergent thinking in large language models through
+  multi-agent debate.
+\newblock {\em arXiv preprint arXiv:2305.19118}, 2023.
+
+\bibitem[Lugosi and Mendelson(2019)]{lugosi2019mean}
+G.~Lugosi and S.~Mendelson.
+\newblock Mean estimation and regression under heavy-tailed distributions: A
+  survey.
+\newblock {\em Foundations of Computational Mathematics}, 19(5):1145--1190,
+  2019.
+
+\bibitem[Mazeika et~al.(2024)]{mazeika2024harmbench}
+M.~Mazeika et~al.
+\newblock HarmBench: A standardized evaluation framework for automated red
+  teaming and robust refusal.
+\newblock {\em arXiv preprint arXiv:2402.04249}, 2024.
+
+\bibitem[Wang et~al.(2023)]{wang2023selfconsistency}
+X.~Wang, J.~Wei, D.~Schuurmans, Q.~Le, E.~Chi, S.~Narang, A.~Chowdhery, and
+  D.~Zhou.
+\newblock Self-consistency improves chain of thought reasoning in language
+  models.
+\newblock In {\em ICLR}, 2023.
+
+\bibitem[Zou et~al.(2023)]{zou2023universal}
+A.~Zou, Z.~Wang, J.~Z.~Kolter, and M.~Fredrikson.
+\newblock Universal and transferable adversarial attacks on aligned language
+  models.
+\newblock {\em arXiv preprint arXiv:2307.15043}, 2023.
+
+\end{thebibliography}
+
+\end{document}

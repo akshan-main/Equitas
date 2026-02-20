@@ -22,6 +22,8 @@ from autogen_ext.models.openai import OpenAIChatCompletionClient
 from .config import CLASS_IDS, OPENAI_MODEL
 from .world import Crisis
 from .advisors import _parse_action_id_from_text  # reuse parser
+from .logging_utils import log_conversation
+from .openai_utils import run_with_backoff
 
 
 @dataclass
@@ -82,10 +84,25 @@ Where <ID> is exactly one of: {valid_ids_str}.
 Do **not** output anything after the ACTION_ID line.
 """
 
-        result = await self.agent.run(task=task)
+        result = await run_with_backoff(self.agent, task=task)
         final_msg = result.messages[-1]
         content = getattr(final_msg, "content", "")
+
+        # Log this judge LLM call
+        log_conversation(
+            {
+                "mode": "kalilopolis",
+                "role": "judge",
+                "judge_id": self.class_id,
+                "corrupted": self.corrupted,
+                "crisis_id": crisis.id,
+                "task": task,
+                "response": content,
+            }
+        )
+
         return _parse_action_id_from_text(content, action_ids)
+
 
 
 def _create_model_client() -> OpenAIChatCompletionClient:

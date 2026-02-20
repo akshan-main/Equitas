@@ -1,0 +1,43 @@
+name: gsm8k_sweep
+environment: gsm8k
+seed: 42
+num_runs: 3
+experiment_type: sweep
+
+llm:
+  model: gpt-4o
+  api_key_env: OPENAI_API_KEY
+  temperature: 0.7
+
+world:
+  num_rounds: 50
+
+committee:
+  class_ids: [guardian, auxiliary, producer]
+  members_per_class: 5
+  num_judges: 5
+
+corruption:
+  corruption_rate: 0.25
+  adversary_type: selfish
+  corruption_realization: algorithmic
+  corruption_target: members
+
+gsm8k_data_path: data/gsm8k_test.csv
+gsm8k_max_examples: 50
+
+corruption_rates: [0.0, 0.25, 0.5, 0.75]
+adversary_types: [selfish, coordinated]
+
+aggregators:
+  - method: majority_vote
+  - method: oracle_upper_bound
+  - method: ema_trust
+    ema_alpha: 0.3
+  - method: multiplicative_weights
+    eta: 1.0
+  - method: confidence_weighted
+  - method: random_dictator
+  - method: supervisor_rerank
+
+output_dir: results/gsm8k_sweep

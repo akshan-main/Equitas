@@ -1,0 +1,5 @@
+adversary_type,low,mid,high
+coordinated,oracle,oracle,oracle
+deceptive,oracle,oracle,oracle
+scheduled,oracle,oracle,oracle
+selfish,oracle,oracle,oracle

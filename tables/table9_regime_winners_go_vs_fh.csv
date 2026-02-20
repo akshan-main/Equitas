@@ -1,0 +1,17 @@
+Adversary,Rate,GO Best,GO Margin,FH Best,FH Margin,Same?
+coordinated,0.0,oracle,0.0145,oracle,0.0136,Yes
+coordinated,0.25,oracle,0.0135,oracle,0.0129,Yes
+coordinated,0.5,oracle,0.0192,oracle,0.0132,Yes
+coordinated,0.75,oracle,0.0856,oracle,0.0139,Yes
+deceptive,0.0,oracle,0.0123,oracle,0.0118,Yes
+deceptive,0.25,oracle,0.0191,oracle,0.0203,Yes
+deceptive,0.5,oracle,0.0210,oracle,0.0189,Yes
+deceptive,0.75,oracle,0.0854,oracle,0.0168,Yes
+scheduled,0.0,oracle,0.0132,oracle,0.0122,Yes
+scheduled,0.25,oracle,0.0166,oracle,0.0176,Yes
+scheduled,0.5,oracle,0.0176,oracle,0.0145,Yes
+scheduled,0.75,oracle,0.0692,oracle,0.0201,Yes
+selfish,0.0,oracle,0.0157,oracle,0.0155,Yes
+selfish,0.25,oracle,0.0123,oracle,0.0121,Yes
+selfish,0.5,oracle,0.0128,oracle,0.0116,Yes
+selfish,0.75,oracle,0.0065,oracle,0.0097,Yes

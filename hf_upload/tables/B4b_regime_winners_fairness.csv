@@ -1,0 +1,17 @@
+Adversary,ε,Best,Value,Runner-up,Margin
+coordinated,0.0,Self-Cons,0.9396,Conf-Wt,0.0002
+coordinated,0.25,Majority,0.9386,Trimmed,0.0002
+coordinated,0.5,EMA,0.9341,Majority,0.0007
+coordinated,0.75,Supervisor,0.9345,MW,0.0027
+deceptive,0.0,Conf-Wt,0.9369,EMA,0.0000
+deceptive,0.25,Majority,0.9338,Conf-Wt,0.0004
+deceptive,0.5,Trimmed,0.9351,Conf-Wt,0.0001
+deceptive,0.75,Supervisor,0.9387,MW,0.0015
+scheduled,0.0,Random,0.9315,Trimmed,0.0002
+scheduled,0.25,EMA,0.9351,Conf-Wt,0.0003
+scheduled,0.5,EMA,0.9430,Trimmed,0.0000
+scheduled,0.75,Supervisor,0.9337,Random,0.0036
+selfish,0.0,Self-Cons,0.9329,Majority,0.0001
+selfish,0.25,Self-Cons,0.9316,Conf-Wt,0.0000
+selfish,0.5,Supervisor,0.9376,Trimmed,0.0013
+selfish,0.75,Trimmed,0.9404,Random,0.0005

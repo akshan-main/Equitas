@@ -1,0 +1,146 @@
+name: governance_sweep_fh
+environment: governance
+seed: 42
+num_runs: 5
+llm:
+  model: gpt-4o-mini
+  api_key_env: OPENAI_API_KEY
+  api_base: null
+  temperature: 0.7
+  max_tokens: 512
+  max_retries: 5
+  initial_backoff: 5.0
+world:
+  crisis_axes:
+  - resource_scarcity
+  - external_threat
+  - inequality
+  - economic_instability
+  policy_dims:
+  - tax_merchants
+  - welfare_workers
+  - military_spend
+  - education_investment
+  actions_per_crisis: 3
+  num_rounds: 40
+committee:
+  class_ids:
+  - guardian
+  - auxiliary
+  - producer
+  members_per_class: 7
+  num_judges: 5
+corruption:
+  corruption_rate: 0.25
+  adversary_type: selfish
+  corruption_realization: algorithmic
+  corruption_onset_round: null
+  coordinated_target: worst_city
+  scheduled_honest_rounds: 10
+  deceptive_strength: strong
+  corruption_target: members
+aggregators:
+- method: majority_vote
+  eta: 1.0
+  min_weight: 1.0e-06
+  ema_alpha: 0.3
+  trim_fraction: 0.2
+  num_samples: 5
+  alpha: 1.0
+  beta: 0.5
+- method: oracle_upper_bound
+  eta: 1.0
+  min_weight: 1.0e-06
+  ema_alpha: 0.3
+  trim_fraction: 0.2
+  num_samples: 5
+  alpha: 1.0
+  beta: 0.5
+- method: self_consistency
+  eta: 1.0
+  min_weight: 1.0e-06
+  ema_alpha: 0.3
+  trim_fraction: 0.2
+  num_samples: 5
+  alpha: 1.0
+  beta: 0.5
+- method: ema_trust
+  eta: 1.0
+  min_weight: 1.0e-06
+  ema_alpha: 0.3
+  trim_fraction: 0.2
+  num_samples: 5
+  alpha: 1.0
+  beta: 0.5
+- method: trimmed_vote
+  eta: 1.0
+  min_weight: 1.0e-06
+  ema_alpha: 0.3
+  trim_fraction: 0.2
+  num_samples: 5
+  alpha: 1.0
+  beta: 0.5
+- method: multiplicative_weights
+  eta: 1.0
+  min_weight: 1.0e-06
+  ema_alpha: 0.3
+  trim_fraction: 0.2
+  num_samples: 5
+  alpha: 1.0
+  beta: 0.5
+- method: confidence_weighted
+  eta: 1.0
+  min_weight: 1.0e-06
+  ema_alpha: 0.3
+  trim_fraction: 0.2
+  num_samples: 5
+  alpha: 1.0
+  beta: 0.5
+- method: random_dictator
+  eta: 1.0
+  min_weight: 1.0e-06
+  ema_alpha: 0.3
+  trim_fraction: 0.2
+  num_samples: 5
+  alpha: 1.0
+  beta: 0.5
+- method: supervisor_rerank
+  eta: 1.0
+  min_weight: 1.0e-06
+  ema_alpha: 0.3
+  trim_fraction: 0.2
+  num_samples: 5
+  alpha: 1.0
+  beta: 0.5
+corruption_rates:
+- 0.0
+- 0.25
+- 0.5
+- 0.75
+adversary_types:
+- selfish
+- coordinated
+- scheduled
+- deceptive
+alpha_values:
+- 0.0
+- 0.25
+- 0.5
+- 0.75
+- 1.0
+beta_values:
+- 0.0
+- 0.25
+- 0.5
+- 0.75
+- 1.0
+committee_sizes:
+- 3
+- 5
+- 7
+- 10
+gsm8k_data_path: data/gsm8k_test.csv
+gsm8k_max_examples: 50
+output_dir: outputs/run2/governance_sweep_fh_batch
+save_conversation_log: true
+experiment_type: sweep_fh

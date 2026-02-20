@@ -52,58 +52,58 @@ def _sigmoid(x: float) -> float:
 # Preference weights for each class over crisis axes and policy dims.
 # Signs encode who likes what (e.g., merchants dislike high taxes on merchants).
 CLASS_AXIS_WEIGHTS: Dict[str, Dict[str, float]] = {
-    "philosopher": {
-        "resource_scarcity": -0.2,
-        "external_threat": -0.3,
-        "inequality": -0.8,
-        "economic_instability": -0.5,
+    # Guardians (philosopher-kings): care most about inequality + long-term stability
+    "guardian": {
+        "resource_scarcity":      -0.3,
+        "external_threat":        -0.4,
+        "inequality":             -0.9,  # hate inequality
+        "economic_instability":   -0.6,
     },
-    "warrior": {
-        "resource_scarcity": -0.3,
-        "external_threat": -1.0,
-        "inequality": -0.2,
-        "economic_instability": -0.3,
+    # Auxiliaries (soldiers): care most about external threat + basic order
+    "auxiliary": {
+        "resource_scarcity":      -0.4,
+        "external_threat":        -1.0,  # hate external threat
+        "inequality":             -0.2,
+        "economic_instability":   -0.3,
     },
-    "merchant": {
-        "resource_scarcity": -0.6,
-        "external_threat": -0.4,
-        "inequality": -0.1,
-        "economic_instability": -1.0,
-    },
-    "worker": {
-        "resource_scarcity": -1.0,
-        "external_threat": -0.2,
-        "inequality": -0.8,
-        "economic_instability": -0.6,
+    # Producers (artisans, farmers, merchants, etc., incl. artists):
+    # care most about scarcity + economic stability + being treated fairly
+    "producer": {
+        "resource_scarcity":      -1.0,  # hate running out of stuff
+        "external_threat":        -0.2,
+        "inequality":             -0.6,
+        "economic_instability":   -0.8,  # hate recessions
     },
 }
 
+
 CLASS_POLICY_WEIGHTS: Dict[str, Dict[str, float]] = {
-    "philosopher": {
-        "tax_merchants": 0.1,
-        "welfare_workers": 0.5,
-        "military_spend": 0.1,
-        "education_investment": 1.0,
+    # Guardians: like education + some welfare, ok with modest taxes,
+    # don't want a completely militarized state
+    "guardian": {
+        "tax_merchants":         0.2,
+        "welfare_workers":       0.5,
+        "military_spend":        0.1,
+        "education_investment":  1.0,
     },
-    "warrior": {
-        "tax_merchants": 0.1,
-        "welfare_workers": 0.2,
-        "military_spend": 1.0,
-        "education_investment": 0.2,
+    # Auxiliaries: want strong army, ok with some taxes funding it,
+    # mild about welfare/education
+    "auxiliary": {
+        "tax_merchants":         0.2,
+        "welfare_workers":       0.1,
+        "military_spend":        1.0,  # main priority
+        "education_investment":  0.3,
     },
-    "merchant": {
-        "tax_merchants": -1.0,
-        "welfare_workers": -0.1,
-        "military_spend": 0.2,
-        "education_investment": 0.4,
-    },
-    "worker": {
-        "tax_merchants": 0.3,
-        "welfare_workers": 1.0,
-        "military_spend": 0.0,
-        "education_investment": 0.6,
+    # Producers (artisans, farmers, merchants, etc., incl. *artists*):
+    # want low taxes, strong welfare / social safety, and education
+    "producer": {
+        "tax_merchants":        -0.7,  # dislike heavy taxes on their trade
+        "welfare_workers":       0.8,
+        "military_spend":       -0.1,
+        "education_investment":  0.7,
     },
 }
+
 
 
 def generate_random_crises(
