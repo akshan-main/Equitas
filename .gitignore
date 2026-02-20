@@ -4,6 +4,7 @@
 __pycache__/
 *.pyc
 *.egg-info/
+**/__pycache__/
 
 # IDE / local
 .claude/
